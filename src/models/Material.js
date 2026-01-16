@@ -14,10 +14,7 @@ const attributeSchema = new mongoose.Schema(
 const materialSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, unique: true, trim: true }, // viscose/polyester/zari
-    materialType: { type: String, trim: true, default: "" },
     attributes: { type: [attributeSchema], default: [] },
-    useShade: { type: Boolean, default: true },
-    useQuality: { type: Boolean, default: true },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

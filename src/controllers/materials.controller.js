@@ -1,7 +1,7 @@
 import Material from "../models/Material.js";
 
 export const createMaterial = async (req, res) => {
-  const { name, materialType, attributes, useShade = true, useQuality = true } = req.body || {};
+  const { name, attributes } = req.body || {};
 
   if (!name) {
     return res.status(400).json({ ok: false, message: "name is required" });
@@ -20,10 +20,7 @@ export const createMaterial = async (req, res) => {
 
   const doc = await Material.create({
     name: name.trim(),
-    materialType: materialType || "",
     attributes: attrs,
-    useShade: !!useShade,
-    useQuality: !!useQuality,
   });
   return res.status(201).json({ ok: true, data: doc });
 };

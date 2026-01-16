@@ -8,28 +8,6 @@ const productSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
-    shadeId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Shade",
-      default: null,
-      index: true,
-    },
-
-    // fresh vs redyeing
-    qualityType: {
-      type: String,
-      enum: ["", "fresh", "redyeing"],
-      default: "",
-    },
-
-    // ONLY for polyester: small/big
-    // viscose/zari: ""
-    variant: {
-      type: String,
-      enum: ["", "small", "big"],
-      default: "",
-      index: true,
-    },
 
     retailPrice: { type: Number, default: 0 },
     wholesalePrice: { type: Number, default: 0 },
@@ -43,12 +21,6 @@ const productSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }
-);
-
-// prevent duplicates even if sku changes
-productSchema.index(
-  { materialId: 1, shadeId: 1, qualityType: 1, variant: 1 },
-  { unique: true }
 );
 
 export default mongoose.model("Product", productSchema);

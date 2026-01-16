@@ -80,7 +80,7 @@ export const salesTrendDaily = async (req, res) => {
   res.json({ ok: true, data });
 };
 
-// ✅ Top Shades (by qty sold) using StockLedger sale_out
+// ✅ Top Products (by qty sold) using StockLedger sale_out
 export const topShades = async (req, res) => {
   const { from, to, limit = 10 } = req.query;
   const dateFilter = buildDateFilter(from, to);
@@ -114,23 +114,11 @@ export const topShades = async (req, res) => {
     },
     { $unwind: "$material" },
     {
-      $lookup: {
-        from: "shades",
-        localField: "product.shadeId",
-        foreignField: "_id",
-        as: "shade",
-      },
-    },
-    { $unwind: "$shade" },
-    {
       $project: {
         _id: 0,
         productId: "$product._id",
         sku: "$product.sku",
         material: "$material.name",
-        shadeCode: "$shade.shadeCode",
-        shadeName: "$shade.shadeName",
-        size: "$product.size",
         qualityType: "$product.qualityType",
         qtySold: 1,
       },
@@ -140,7 +128,7 @@ export const topShades = async (req, res) => {
   res.json({ ok: true, data });
 };
 
-// ✅ Slow Shades (no sale in last X days OR very low sale)
+// ✅ Slow Products (no sale in last X days OR very low sale)
 export const slowShades = async (req, res) => {
   const { days = 30, limit = 30 } = req.query;
 
@@ -158,7 +146,6 @@ export const slowShades = async (req, res) => {
   // list products + attach qtySold (0 if not found)
   const products = await Product.find()
     .populate("materialId", "name")
-    .populate("shadeId", "shadeCode shadeName")
     .limit(5000);
 
   const result = products
@@ -166,9 +153,6 @@ export const slowShades = async (req, res) => {
       productId: p._id,
       sku: p.sku,
       material: p.materialId?.name,
-      shadeCode: p.shadeId?.shadeCode,
-      shadeName: p.shadeId?.shadeName,
-      size: p.size,
       qualityType: p.qualityType,
       qtySold: soldMap.get(String(p._id)) || 0,
     }))

@@ -4,7 +4,6 @@ import helmet from "helmet";
 import morgan from "morgan";
 
 import materialsRoutes from "./routes/materials.routes.js";
-import shadesRoutes from "./routes/shades.routes.js";
 import productsRoutes from "./routes/products.routes.js";
 import inventoryRoutes from "./routes/inventory.routes.js";
 import salesRoutes from "./routes/sales.routes.js";
@@ -36,7 +35,6 @@ app.get("/api/health", (req, res) => {
 
 // ✅ Routes
 app.use("/api/materials", materialsRoutes);
-app.use("/api/shades", shadesRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/inventory", inventoryRoutes);
 app.use("/api/sales", salesRoutes);
