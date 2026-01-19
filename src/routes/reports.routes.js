@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { salesSummary, salesTrendDaily, topShades, slowShades } from "../controllers/reports.controller.js";
+import { salesSummary, salesTrendDaily, topProducts, slowProducts } from "../controllers/reports.controller.js";
 
 const router = Router();
 
@@ -13,11 +13,11 @@ router.get("/sales-summary", salesSummary);
 // OR /api/reports/sales-trend-daily?from=&to=
 router.get("/sales-trend-daily", salesTrendDaily);
 
-// top shades
-// /api/reports/top-shades?from=&to=&limit=10
-router.get("/top-shades", topShades);
+// top products
+// /api/reports/top-products?from=&to=&limit=10
+router.get("/top-products", topProducts);
 
-// slow shades (last X days)
-router.get("/slow-shades", slowShades);
+// slow products (last X days)
+router.get("/slow-products", slowProducts);
 
 export default router;

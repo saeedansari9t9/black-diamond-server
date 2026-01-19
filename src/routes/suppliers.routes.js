@@ -1,10 +1,11 @@
-// Suppliers routes placeholder
+import express from "express";
+import { getSuppliers, createSupplier, updateSupplier, deleteSupplier } from "../controllers/suppliers.controller.js";
 
-const express = require('express');
 const router = express.Router();
 
-// TODO: import suppliers controller and define routes
+router.get("/", getSuppliers);
+router.post("/", createSupplier);
+router.put("/:id", updateSupplier);
+router.delete("/:id", deleteSupplier);
 
-module.exports = router;
-
-
+export default router;

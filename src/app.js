@@ -12,6 +12,9 @@ import authRoutes from "./routes/auth.routes.js";
 import usersRoutes from "./routes/users.routes.js";
 import passwordRoutes from "./routes/password.routes.js";
 import customersRoutes from "./routes/customers.routes.js";
+import suppliersRoutes from "./routes/suppliers.routes.js";
+import purchasesRoutes from "./routes/purchases.routes.js";
+import rawMaterialsRoutes from "./routes/rawMaterials.routes.js";
 
 const app = express();
 
@@ -43,5 +46,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", usersRoutes);
 app.use("/api/password", passwordRoutes);
 app.use("/api/customers", customersRoutes);
+app.use("/api/suppliers", suppliersRoutes);
+app.use("/api/purchases", purchasesRoutes);
+app.use("/api/raw-materials", rawMaterialsRoutes);
 
 export default app;

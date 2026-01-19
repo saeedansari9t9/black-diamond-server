@@ -90,3 +90,54 @@ export const listProducts = async (req, res) => {
 
   res.json({ ok: true, data });
 };
+// Update a product
+export const updateProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { materialId, attributes, retailPrice, wholesalePrice } = req.body;
+
+    const product = await Product.findById(id);
+    if (!product) return res.status(404).json({ ok: false, message: "Product not found" });
+
+    // If attributes change, we might need to regenerate SKU
+    // For now, let's regenerate SKU if material or attributes change
+    let sku = product.sku;
+    if (materialId || attributes) {
+      const matId = materialId || product.materialId;
+      const attrs = attributes || product.attributes;
+      const material = await Material.findById(matId);
+      if (material) {
+        // Logic to make SKU (reused from create)
+        // We can refactor makeSKU to be exported or used here helper
+        // For simplicity, let's assume makeSKU is available in scope (it is)
+        sku = makeSKU({ material, attributes: attrs });
+      }
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+      id,
+      {
+        materialId: materialId || product.materialId,
+        attributes: attributes || product.attributes,
+        retailPrice: retailPrice !== undefined ? Number(retailPrice) : product.retailPrice,
+        wholesalePrice: wholesalePrice !== undefined ? Number(wholesalePrice) : product.wholesalePrice,
+        sku
+      },
+      { new: true }
+    );
+    res.json({ ok: true, data: updated });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+// Delete a product
+export const deleteProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Product.findByIdAndDelete(id);
+    res.json({ ok: true, message: "Product deleted" });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};

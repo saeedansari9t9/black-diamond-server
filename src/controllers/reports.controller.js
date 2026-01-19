@@ -81,7 +81,7 @@ export const salesTrendDaily = async (req, res) => {
 };
 
 // ✅ Top Products (by qty sold) using StockLedger sale_out
-export const topShades = async (req, res) => {
+export const topProducts = async (req, res) => {
   const { from, to, limit = 10 } = req.query;
   const dateFilter = buildDateFilter(from, to);
 
@@ -129,7 +129,7 @@ export const topShades = async (req, res) => {
 };
 
 // ✅ Slow Products (no sale in last X days OR very low sale)
-export const slowShades = async (req, res) => {
+export const slowProducts = async (req, res) => {
   const { days = 30, limit = 30 } = req.query;
 
   const end = endOfDay(new Date());

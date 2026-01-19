@@ -12,12 +12,6 @@ try {
   const db = mongoose.connection.db;
   const collection = db.collection("products");
 
-  // Drop old indexes
-  const oldIndexNames = [
-    "materialId_1_shadeId_1_size_1_qualityType_1",
-    "materialId_1_qualityType_1_variant_1"
-  ];
-
   for (const indexName of oldIndexNames) {
     try {
       await collection.dropIndex(indexName);

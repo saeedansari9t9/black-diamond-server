@@ -24,11 +24,10 @@ export const addStockEntry = async (req, res) => {
 
 // ✅ Current stock (sum of ledger)
 export const getCurrentStock = async (req, res) => {
-  const { materialId, shadeId, q } = req.query;
+  const { materialId, q } = req.query;
 
   const matchProduct = {};
   if (materialId) matchProduct.materialId = materialId;
-  if (shadeId) matchProduct.shadeId = shadeId;
   if (q) matchProduct.sku = { $regex: q, $options: "i" };
 
   const data = await Product.aggregate([
@@ -47,15 +46,27 @@ export const getCurrentStock = async (req, res) => {
       },
     },
     {
+      $lookup: {
+        from: "materials",
+        localField: "materialId",
+        foreignField: "_id",
+        as: "mat",
+      },
+    },
+    {
+      $unwind: { path: "$mat", preserveNullAndEmptyArrays: true }, // Unwind material array
+    },
+    {
       $project: {
         materialId: 1,
-        shadeId: 1,
+        materialName: "$mat.name", // Project material name
         size: 1,
         qualityType: 1,
         sku: 1,
         retailPrice: 1,
         wholesalePrice: 1,
         stock: 1,
+        attributes: 1, // Include attributes if needed
       },
     },
     { $sort: { stock: 1 } },

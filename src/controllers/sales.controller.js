@@ -51,11 +51,11 @@ export const createSale = async (req, res) => {
 
   let customerSnapshot = { name: customerName?.trim() || "Walk-in", phone: "" };
 
-if (customerId) {
-  // optional: fetch customer to save snapshot
-  const c = await (await import("../models/Customer.js")).default.findById(customerId);
-  if (c) customerSnapshot = { name: c.name, phone: c.phone || "" };
-}
+  if (customerId) {
+    // optional: fetch customer to save snapshot
+    const c = await (await import("../models/Customer.js")).default.findById(customerId);
+    if (c) customerSnapshot = { name: c.name, phone: c.phone || "" };
+  }
 
   // ✅ Create sale doc
   const sale = await Sale.create({
@@ -106,18 +106,22 @@ export const listSales = async (req, res) => {
 export const getSaleById = async (req, res) => {
   const { id } = req.params;
 
-  const sale = await Sale.findById(id)
-    .populate({
-      path: "items.productId",
-      select: "sku size qualityType materialId shadeId",
-      populate: [
-        { path: "materialId", select: "name" },
-        { path: "shadeId", select: "shadeCode shadeName" },
-      ],
-    })
-    .populate({ path: "customerId", select: "name phone address" });
+  try {
+    const sale = await Sale.findById(id)
+      .populate({
+        path: "items.productId",
+        select: "sku size qualityType materialId",
+        populate: [
+          { path: "materialId", select: "name" },
+        ],
+      })
+      .populate({ path: "customerId", select: "name phone address" });
 
-  if (!sale) return res.status(404).json({ ok: false, message: "Sale not found" });
+    if (!sale) return res.status(404).json({ ok: false, message: "Sale not found" });
 
-  res.json({ ok: true, data: sale });
+    res.json({ ok: true, data: sale });
+  } catch (error) {
+    console.error("getSaleById error:", error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
 };

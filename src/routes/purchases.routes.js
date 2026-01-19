@@ -1,10 +1,10 @@
-// Purchases routes placeholder
+import { Router } from "express";
+import { createPurchase, listPurchases, getPurchaseById } from "../controllers/purchases.controller.js";
 
-const express = require('express');
-const router = express.Router();
+const router = Router();
 
-// TODO: import purchases controller and define routes
+router.post("/", createPurchase);
+router.get("/", listPurchases);
+router.get("/:id", getPurchaseById);
 
-module.exports = router;
-
-
+export default router;
