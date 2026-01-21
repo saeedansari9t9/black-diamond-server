@@ -36,6 +36,10 @@ app.get("/api/health", (req, res) => {
   res.json({ ok: true, message: "API is running" });
 });
 
+app.get("/", (req, res) => {
+  res.send("Backend Live 🚀");
+});
+
 // ✅ Routes
 app.use("/api/materials", materialsRoutes);
 app.use("/api/products", productsRoutes);
