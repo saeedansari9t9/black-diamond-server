@@ -47,7 +47,15 @@ export const createSale = async (req, res) => {
   const paid = Number(paidAmount || 0);
   const dueAmount = Math.max(0, grandTotal - paid);
 
-  const invoiceNo = makeInvoiceNo();
+  /* Sequential Invoice Logic */
+  const lastSale = await Sale.findOne().sort({ createdAt: -1 });
+  let nextNum = 10001;
+  if (lastSale && lastSale.invoiceNo && lastSale.invoiceNo.startsWith("BD-")) {
+    const parts = lastSale.invoiceNo.split("-");
+    const lastN = parseInt(parts[1]);
+    if (!isNaN(lastN)) nextNum = lastN + 1;
+  }
+  const invoiceNo = `BD-${nextNum}`;
 
   let customerSnapshot = { name: customerName?.trim() || "Walk-in", phone: "" };
 

@@ -1,5 +1,6 @@
 import Product from "../models/Product.js";
 import Material from "../models/Material.js";
+import StockLedger from "../models/StockLedger.js";
 
 // SKU generated from material short name (first 3 chars) + shade number from attributes (if available)
 // Example: POL-20, VIS-15, ZAR-05, GLU-1 (or just GLU if no shade in attributes)
@@ -25,7 +26,7 @@ const makeSKU = ({ material, attributes }) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { materialId, attributes = {}, retailPrice, wholesalePrice } = req.body || {};
+    const { materialId, attributes = {}, retailPrice, wholesalePrice, initialStock } = req.body || {};
 
     if (!materialId) {
       return res.status(400).json({
@@ -69,6 +70,16 @@ export const createProduct = async (req, res) => {
     };
 
     const doc = await Product.create(productData);
+
+    // Initial Stock (Opening Stock)
+    if (initialStock && Number(initialStock) > 0) {
+      await StockLedger.create({
+        productId: doc._id,
+        type: "adjust", // Treating as adjustment/opening
+        qtyChange: Number(initialStock),
+        note: "Opening Stock",
+      });
+    }
 
     res.status(201).json({ ok: true, data: doc });
   } catch (err) {

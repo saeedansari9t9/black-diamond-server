@@ -47,7 +47,15 @@ export const createPurchase = async (req, res) => {
   const paid = Number(paidAmount || 0);
   const due = Math.max(0, grandTotal - paid);
 
-  const purchaseNo = makePurchaseNo();
+  /* Sequential Purchase Logic */
+  const lastPurchase = await Purchase.findOne().sort({ createdAt: -1 });
+  let nextNum = 10001;
+  if (lastPurchase && lastPurchase.purchaseNo && lastPurchase.purchaseNo.startsWith("PO-")) {
+    const parts = lastPurchase.purchaseNo.split("-");
+    const lastN = parseInt(parts[1]);
+    if (!isNaN(lastN)) nextNum = lastN + 1;
+  }
+  const purchaseNo = `PO-${nextNum}`;
 
   let supplierSnapshot = { name: "Walk-in", phone: "" };
   if (supplierId) {
