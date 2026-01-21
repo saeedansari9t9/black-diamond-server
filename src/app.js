@@ -27,7 +27,17 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
-    origin: process.env.CLIENT_ORIGIN || "http://localhost:5173",
+    origin: function(origin, callback) {
+      const allowedOrigins = [
+        "http://localhost:5173", // local development
+        "https://black-diamond-client-chi.vercel.app", // deployed frontend URL
+      ];
+      if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
+        callback(null, true); // Allow the request
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
