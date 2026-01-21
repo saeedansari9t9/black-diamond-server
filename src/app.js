@@ -30,7 +30,7 @@ app.use(
     origin: function(origin, callback) {
       const allowedOrigins = [
         "http://localhost:5173", // local development
-        "https://black-diamond-client-chi.vercel.app", // deployed frontend URL
+        "https://black-diamond-thread.vercel.app", // deployed frontend URL
       ];
       if (allowedOrigins.indexOf(origin) !== -1 || !origin) {
         callback(null, true); // Allow the request
