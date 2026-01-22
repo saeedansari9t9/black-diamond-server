@@ -18,11 +18,18 @@ export const createMaterial = async (req, res) => {
     }))
     : [];
 
-  const doc = await Material.create({
-    name: name.trim(),
-    attributes: attrs,
-  });
-  return res.status(201).json({ ok: true, data: doc });
+  console.log("Create Material Body:", req.body);
+  try {
+    const doc = await Material.create({
+      name: name.trim(),
+      attributes: attrs,
+    });
+    console.log("Material created:", doc);
+    return res.status(201).json({ ok: true, data: doc });
+  } catch (e) {
+    console.error("Create Material Error:", e);
+    return res.status(400).json({ ok: false, message: e.message });
+  }
 };
 
 export const listMaterials = async (req, res) => {
