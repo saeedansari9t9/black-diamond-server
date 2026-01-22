@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema(
   {
+    productId: { type: String, unique: true }, // P001
     materialId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Material",
@@ -11,9 +12,6 @@ const productSchema = new mongoose.Schema(
 
     retailPrice: { type: Number, default: 0 },
     wholesalePrice: { type: Number, default: 0 },
-
-    // auto sku (search)
-    productId: { type: String, unique: true }, // P001
     sku: { type: String, required: true, unique: true, index: true },
 
     // material-specific attribute values (e.g. needleNo)
