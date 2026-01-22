@@ -13,6 +13,7 @@ const productSchema = new mongoose.Schema(
     wholesalePrice: { type: Number, default: 0 },
 
     // auto sku (search)
+    productId: { type: String, unique: true }, // P001
     sku: { type: String, required: true, unique: true, index: true },
 
     // material-specific attribute values (e.g. needleNo)

@@ -20,7 +20,18 @@ export const createMaterial = async (req, res) => {
 
   console.log("Create Material Body:", req.body);
   try {
+    // Generate Material ID
+    const lastMaterial = await Material.findOne().sort({ createdAt: -1 });
+    let nextId = "M001";
+    if (lastMaterial && lastMaterial.materialId) {
+      const num = parseInt(lastMaterial.materialId.substring(1));
+      if (!isNaN(num)) {
+        nextId = `M${String(num + 1).padStart(3, "0")}`;
+      }
+    }
+
     const doc = await Material.create({
+      materialId: nextId,
       name: name.trim(),
       attributes: attrs,
     });

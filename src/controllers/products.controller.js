@@ -61,7 +61,18 @@ export const createProduct = async (req, res) => {
       return res.status(409).json({ ok: false, message: "Product with this SKU already exists" });
     }
 
+    // Generate Product ID
+    const lastProduct = await Product.findOne().sort({ createdAt: -1 });
+    let nextId = "P001";
+    if (lastProduct && lastProduct.productId) {
+      const num = parseInt(lastProduct.productId.substring(1));
+      if (!isNaN(num)) {
+        nextId = `P${String(num + 1).padStart(3, "0")}`;
+      }
+    }
+
     const productData = {
+      productId: nextId,
       materialId,
       retailPrice: Number(retailPrice || 0),
       wholesalePrice: Number(wholesalePrice || 0),

@@ -13,6 +13,7 @@ const attributeSchema = new mongoose.Schema(
 
 const materialSchema = new mongoose.Schema(
   {
+    materialId: { type: String, unique: true }, // M001
     name: { type: String, required: true, unique: true, trim: true }, // viscose/polyester/zari
     attributes: { type: [attributeSchema], default: [] },
     isActive: { type: Boolean, default: true },
