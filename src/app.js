@@ -29,6 +29,7 @@ app.use(
   cors({
     origin: function(origin, callback) {
       const allowedOrigins = [
+        "http://localhost:51616",
         "http://localhost:5173", // local development
         "https://blackdiamondthread.vercel.app", // deployed frontend URL
       ];
