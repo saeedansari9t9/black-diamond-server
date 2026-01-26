@@ -1,5 +1,6 @@
 import Sale from "../models/Sale.js";
 import Product from "../models/Product.js";
+import Customer from "../models/Customer.js";
 import StockLedger from "../models/StockLedger.js";
 import { makeInvoiceNo } from "../utils/invoice.js";
 
@@ -44,8 +45,26 @@ export const createSale = async (req, res) => {
   }
 
   const grandTotal = Math.max(0, subTotal - Number(discount || 0));
-  const paid = Number(paidAmount || 0);
-  const dueAmount = Math.max(0, grandTotal - paid);
+  let paid = Number(paidAmount || 0);
+  let dueAmount = Math.max(0, grandTotal - paid);
+  let finalNote = note;
+
+  // ✅ Automatic Wallet Deduction
+  if (customerId && dueAmount > 0) {
+    const customer = await Customer.findById(customerId);
+    if (customer && customer.walletBalance > 0) {
+      const deduction = Math.min(customer.walletBalance, dueAmount);
+
+      if (deduction > 0) {
+        paid += deduction;
+        dueAmount -= deduction;
+        customer.walletBalance -= deduction;
+        await customer.save();
+
+        finalNote = `${finalNote ? finalNote + ". " : ""}Paid from Wallet: ${deduction}`;
+      }
+    }
+  }
 
   /* Sequential Invoice Logic */
   const lastSale = await Sale.findOne().sort({ createdAt: -1 });
@@ -61,7 +80,7 @@ export const createSale = async (req, res) => {
 
   if (customerId) {
     // optional: fetch customer to save snapshot
-    const c = await (await import("../models/Customer.js")).default.findById(customerId);
+    const c = await Customer.findById(customerId);
     if (c) customerSnapshot = { name: c.name, phone: c.phone || "" };
   }
 
@@ -79,7 +98,7 @@ export const createSale = async (req, res) => {
     paymentMethod,
     paidAmount: paid,
     dueAmount,
-    note,
+    note: finalNote,
   });
 
   // ✅ Stock ledger entries (minus stock)
@@ -107,7 +126,14 @@ export const listSales = async (req, res) => {
     if (to) filter.createdAt.$lte = new Date(to);
   }
 
-  const data = await Sale.find(filter).sort({ createdAt: -1 }).limit(200);
+  const data = await Sale.find(filter)
+    .populate({
+      path: "items.productId",
+      select: "sku size qualityType materialId",
+      populate: { path: "materialId", select: "name" }
+    })
+    .sort({ createdAt: -1 })
+    .limit(200);
   res.json({ ok: true, data });
 };
 

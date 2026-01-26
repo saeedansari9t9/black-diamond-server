@@ -70,3 +70,34 @@ export const updateUserStatus = async (req, res) => {
 
   res.json({ ok: true, data: user });
 };
+
+// PUT /api/users/:id
+export const updateUser = async (req, res) => {
+  const { id } = req.params;
+  const { name, email, role, password } = req.body || {};
+
+  const updates = {};
+  if (name) updates.name = name.trim();
+  if (email) updates.email = email.toLowerCase().trim();
+  if (role) updates.role = role;
+  if (password) updates.passwordHash = await bcrypt.hash(password, 10);
+
+  // Check email uniqueness if changing
+  if (updates.email) {
+    const exists = await User.findOne({ email: updates.email, _id: { $ne: id } });
+    if (exists) return res.status(409).json({ ok: false, message: "Email already taken" });
+  }
+
+  const user = await User.findByIdAndUpdate(id, updates, { new: true }).select("-passwordHash");
+  if (!user) return res.status(404).json({ ok: false, message: "User not found" });
+
+  res.json({ ok: true, data: user });
+};
+
+// DELETE /api/users/:id
+export const deleteUser = async (req, res) => {
+  const { id } = req.params;
+  const user = await User.findByIdAndDelete(id);
+  if (!user) return res.status(404).json({ ok: false, message: "User not found" });
+  res.json({ ok: true, message: "User deleted" });
+};

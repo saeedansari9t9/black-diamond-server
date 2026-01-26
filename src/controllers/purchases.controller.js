@@ -48,12 +48,20 @@ export const createPurchase = async (req, res) => {
   const due = Math.max(0, grandTotal - paid);
 
   /* Sequential Purchase Logic */
-  const lastPurchase = await Purchase.findOne().sort({ createdAt: -1 });
-  let nextNum = 10001;
-  if (lastPurchase && lastPurchase.purchaseNo && lastPurchase.purchaseNo.startsWith("PO-")) {
+  // Find last PO that looks like "PO-XXXXX" where X is a number < 20000000 (to avoid dates)
+  const lastPurchase = await Purchase.findOne({
+    purchaseNo: { $regex: /^PO-\d+$/ }
+  }).sort({ createdAt: -1 });
+
+  let nextNum = 50001;
+  if (lastPurchase && lastPurchase.purchaseNo) {
     const parts = lastPurchase.purchaseNo.split("-");
     const lastN = parseInt(parts[1]);
-    if (!isNaN(lastN)) nextNum = lastN + 1;
+
+    // If last number is valid and not a date (dates are usually > 20200000)
+    if (!isNaN(lastN) && lastN < 20000000) {
+      nextNum = lastN + 1;
+    }
   }
   const purchaseNo = `PO-${nextNum}`;
 

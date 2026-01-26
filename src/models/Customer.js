@@ -6,6 +6,7 @@ const customerSchema = new mongoose.Schema(
     phone: { type: String, trim: true, index: true, default: "" },
     address: { type: String, trim: true, default: "" },
     notes: { type: String, trim: true, default: "" },
+    walletBalance: { type: Number, default: 0 },
     isActive: { type: Boolean, default: true },
   },
   { timestamps: true }

@@ -161,3 +161,50 @@ export const slowProducts = async (req, res) => {
 
   res.json({ ok: true, data: result, meta: { days: Number(days) } });
 };
+
+// ✅ Top Customers (by total purchase amount)
+export const topCustomers = async (req, res) => {
+  const { range, from, to, limit = 10 } = req.query;
+
+  let dateFilter = {};
+  if (range) {
+    const r = rangeFromKey(range);
+    if (r) dateFilter = { createdAt: { $gte: r.from, $lte: r.to } };
+  } else {
+    dateFilter = buildDateFilter(from, to);
+  }
+
+  const data = await Sale.aggregate([
+    { $match: { ...dateFilter, customerId: { $exists: true, $ne: null } } },
+    {
+      $group: {
+        _id: "$customerId",
+        totalSpent: { $sum: "$grandTotal" },
+        orders: { $sum: 1 },
+      },
+    },
+    { $sort: { totalSpent: -1 } },
+    { $limit: Number(limit) },
+    {
+      $lookup: {
+        from: "customers",
+        localField: "_id",
+        foreignField: "_id",
+        as: "customer",
+      },
+    },
+    { $unwind: "$customer" },
+    {
+      $project: {
+        _id: 0,
+        customerId: "$_id",
+        name: "$customer.name",
+        phone: "$customer.phone",
+        totalSpent: 1,
+        orders: 1,
+      },
+    },
+  ]);
+
+  res.json({ ok: true, data });
+};

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { salesSummary, salesTrendDaily, topProducts, slowProducts } from "../controllers/reports.controller.js";
+import { salesSummary, salesTrendDaily, topProducts, slowProducts, topCustomers } from "../controllers/reports.controller.js";
 
 const router = Router();
 
@@ -16,6 +16,9 @@ router.get("/sales-trend-daily", salesTrendDaily);
 // top products
 // /api/reports/top-products?from=&to=&limit=10
 router.get("/top-products", topProducts);
+
+// top customers
+router.get("/top-customers", topCustomers);
 
 // slow products (last X days)
 router.get("/slow-products", slowProducts);
