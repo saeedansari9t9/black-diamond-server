@@ -82,8 +82,15 @@ export const salesTrendDaily = async (req, res) => {
 
 // ✅ Top Products (by qty sold) using StockLedger sale_out
 export const topProducts = async (req, res) => {
-  const { from, to, limit = 10 } = req.query;
-  const dateFilter = buildDateFilter(from, to);
+  const { range, from, to, limit = 10 } = req.query;
+
+  let dateFilter = {};
+  if (range) {
+    const r = rangeFromKey(range);
+    if (r) dateFilter = { createdAt: { $gte: r.from, $lte: r.to } };
+  } else {
+    dateFilter = buildDateFilter(from, to);
+  }
 
   const data = await StockLedger.aggregate([
     { $match: { ...dateFilter, type: "sale_out" } },
@@ -123,6 +130,56 @@ export const topProducts = async (req, res) => {
         qtySold: 1,
       },
     },
+  ]);
+
+  res.json({ ok: true, data });
+};
+
+// ✅ Top Customers (by purchase amount)
+export const topCustomers = async (req, res) => {
+  const { range, from, to, limit = 10 } = req.query;
+
+  let dateFilter = {};
+  if (range) {
+    const r = rangeFromKey(range);
+    if (r) dateFilter = { createdAt: { $gte: r.from, $lte: r.to } };
+  } else {
+    dateFilter = buildDateFilter(from, to);
+  }
+
+  const data = await Sale.aggregate([
+    { $match: dateFilter },
+    {
+      $group: {
+        _id: "$customerId",
+        name: { $first: "$customerName" }, // fallback if customerId is null or just to grab a name
+        totalAmount: { $sum: "$grandTotal" },
+        orders: { $sum: 1 },
+      },
+    },
+    { $sort: { totalAmount: -1 } },
+    { $limit: Number(limit) },
+    {
+      $lookup: {
+        from: "customers",
+        localField: "_id",
+        foreignField: "_id",
+        as: "customerInfo"
+      }
+    },
+    // We keep optional chaining logic in frontend, here just pass what we have. 
+    // If specific customer names are needed from the Customer collection (if name in Sale is stale), we can use customerInfo.
+    // Sale model has customerName which is a snapshot. Using that is usually faster/easier for simple lists unless name changed. 
+    // Let's rely on Sale.customerName for now as it makes it simpler, but if we want strict reference we use lookup.
+    // The previous design for Sale snapshot supports "Walk-in" which has no ID.
+    {
+      $project: {
+        _id: 1, // customerId
+        name: { $ifNull: [{ $arrayElemAt: ["$customerInfo.name", 0] }, "$name"] },
+        totalAmount: 1,
+        orders: 1
+      }
+    }
   ]);
 
   res.json({ ok: true, data });
