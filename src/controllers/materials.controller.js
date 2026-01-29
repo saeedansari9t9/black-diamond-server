@@ -44,7 +44,11 @@ export const createMaterial = async (req, res) => {
 };
 
 export const listMaterials = async (req, res) => {
-  const data = await Material.find().sort({ name: 1 });
+  const { q } = req.query;
+  const filter = {};
+  if (q) filter.name = { $regex: q, $options: "i" };
+
+  const data = await Material.find(filter).sort({ name: 1 });
   res.json({ ok: true, data });
 };
 

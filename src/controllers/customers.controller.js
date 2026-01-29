@@ -131,3 +131,35 @@ export const addPayment = async (req, res) => {
 
   res.json({ ok: true, data: payment, message: "Payment recorded" });
 };
+
+export const updateCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, phone, address, notes } = req.body;
+
+    if (!name) return res.status(400).json({ ok: false, message: "Name is required" });
+
+    const updated = await Customer.findByIdAndUpdate(
+      id,
+      { name, phone, address, notes },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ ok: false, message: "Customer not found" });
+
+    res.json({ ok: true, data: updated, message: "Customer updated" });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};
+
+export const deleteCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Customer.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ ok: false, message: "Customer not found" });
+    res.json({ ok: true, message: "Customer deleted" });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};

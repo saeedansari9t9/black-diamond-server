@@ -35,7 +35,11 @@ export const createRawMaterial = async (req, res) => {
 
 export const listRawMaterials = async (req, res) => {
     try {
-        const data = await RawMaterial.find({ isActive: true }).sort({ name: 1 });
+        const { q } = req.query;
+        const filter = { isActive: true };
+        if (q) filter.name = { $regex: q, $options: "i" };
+
+        const data = await RawMaterial.find(filter).sort({ name: 1 });
         res.json({ ok: true, data });
     } catch (error) {
         res.status(500).json({ ok: false, message: error.message });

@@ -4,24 +4,36 @@ import StockLedger from "../models/StockLedger.js";
 
 // SKU generated from material short name (first 3 chars) + shade number from attributes (if available)
 // Example: POL-20, VIS-15, ZAR-05, GLU-1 (or just GLU if no shade in attributes)
+// SKU generated from material short name + all attribute values
+// Example: VIS-CONE3055-CREAM-AG
 const makeSKU = ({ material, attributes }) => {
-  // If material has attributes, use first attribute value
-  if (material.attributes && material.attributes.length > 0) {
-    const matShort = material.name.substring(0, 3).toUpperCase();
-    const firstAttrKey = material.attributes[0].key;
-    let firstAttrValue = attributes?.[firstAttrKey] || "";
+  const parts = [];
 
-    if (firstAttrValue) {
-      // Convert to uppercase and replace spaces with hyphens
-      firstAttrValue = String(firstAttrValue).toUpperCase().replace(/\s+/g, '-');
-      return `${matShort}-${firstAttrValue}`;
-    }
-    // If first attribute value is empty, still use short name with placeholder
-    return `${matShort}-EMPTY`;
+  // 1. Material Short Name
+  parts.push(material.name.substring(0, 3).toUpperCase());
+
+  // 2. Add all attribute values
+  if (material.attributes && material.attributes.length > 0) {
+    material.attributes.forEach(attr => {
+      const val = attributes?.[attr.key];
+      if (val) {
+        // Clean value: remove special chars, replace spaces with nothing or hyphen
+        // keeping it simple: Uppercase, remove non-alphanumeric (except hyphen/underscore?) 
+        // actually commonly skus don't have spaces.
+        const cleanVal = String(val).trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+        if (cleanVal) parts.push(cleanVal);
+      }
+    });
   }
 
-  // If no attributes, use full material name (uppercase, replace spaces with hyphens)
-  return material.name.toUpperCase().replace(/\s+/g, '-');
+  // If no attributes added (parts has only material), add full name or timestamp?
+  // User wants uniqueness based on attributes. If they differ, SKU will differ.
+  // If only material code exists, it means no attributes provided.
+  if (parts.length === 1) {
+    return material.name.toUpperCase().replace(/\s+/g, '-').replace(/[^A-Z0-9-]/g, '');
+  }
+
+  return parts.join("-");
 };
 
 export const createProduct = async (req, res) => {
@@ -106,11 +118,25 @@ export const listProducts = async (req, res) => {
   if (materialId) filter.materialId = materialId;
   if (q) filter.sku = { $regex: q, $options: "i" };
 
-  const data = await Product.find(filter)
-    .populate("materialId", "name")
-    .sort({ createdAt: -1 });
+  try {
+    const products = await Product.find(filter)
+      .populate("materialId", "name")
+      .sort({ createdAt: -1 });
 
-  res.json({ ok: true, data });
+    // Calculate stock for each product
+    const data = await Promise.all(products.map(async (p) => {
+      const ledgers = await StockLedger.find({ productId: p._id }, { qtyChange: 1 });
+      const currentStock = ledgers.reduce((acc, l) => acc + (l.qtyChange || 0), 0);
+      return {
+        ...p.toObject(),
+        currentStock
+      };
+    }));
+
+    res.json({ ok: true, data });
+  } catch (error) {
+    res.status(500).json({ ok: false, message: error.message });
+  }
 };
 // Update a product
 export const updateProduct = async (req, res) => {
