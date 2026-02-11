@@ -8,6 +8,7 @@ export const createSale = async (req, res) => {
   const {
     customerId,
     customerName,
+    customerPhone, // New field
     saleType,
     items,
     discount = 0,
@@ -15,6 +16,39 @@ export const createSale = async (req, res) => {
     paidAmount = 0,
     note = "",
   } = req.body || {};
+
+  // ✅ Resolve Walk-in Customer (if phone provided)
+  let resolvedCustomerId = customerId;
+  let resolvedCustomerName = customerName?.trim() || "Walk-in";
+  let isNewCustomer = false;
+
+  if (!resolvedCustomerId && customerPhone && customerPhone.trim()) {
+    const phone = customerPhone.trim();
+    // 1. Check if customer exists by phone
+    let customer = await Customer.findOne({ phone });
+
+    if (customer) {
+      // Found existing customer -> Use their ID
+      resolvedCustomerId = customer._id;
+      // Optional: Update name if you want to sync, or just keep what was typed.
+      // For now, let's prefer the existing customer's registered name to keep data consistent
+      resolvedCustomerName = customer.name;
+    } else {
+      // 2. Not found -> Create new customer
+      // We need a name. If users left it blank but gave a phone, we might fallback to "Customer {phone}"
+      const newName = resolvedCustomerName !== "Walk-in" ? resolvedCustomerName : `Customer ${phone}`;
+
+      customer = await Customer.create({
+        name: newName,
+        phone: phone,
+        address: "", // optional
+        notes: "Created from Walk-in Sale",
+      });
+      resolvedCustomerId = customer._id;
+      resolvedCustomerName = customer.name;
+      isNewCustomer = true;
+    }
+  }
 
   if (!Array.isArray(items) || items.length === 0) {
     return res.status(400).json({ ok: false, message: "items required" });
@@ -50,8 +84,8 @@ export const createSale = async (req, res) => {
   let finalNote = note;
 
   // ✅ Automatic Wallet Deduction
-  if (customerId && dueAmount > 0) {
-    const customer = await Customer.findById(customerId);
+  if (resolvedCustomerId && dueAmount > 0) {
+    const customer = await Customer.findById(resolvedCustomerId);
     if (customer && customer.walletBalance > 0) {
       const deduction = Math.min(customer.walletBalance, dueAmount);
 
@@ -76,20 +110,23 @@ export const createSale = async (req, res) => {
   }
   const invoiceNo = `BD-${nextNum}`;
 
-  let customerSnapshot = { name: customerName?.trim() || "Walk-in", phone: "" };
+  let customerSnapshot = { name: resolvedCustomerName, phone: customerPhone || "" };
 
-  if (customerId) {
-    // optional: fetch customer to save snapshot
-    const c = await Customer.findById(customerId);
-    if (c) customerSnapshot = { name: c.name, phone: c.phone || "" };
+  if (resolvedCustomerId) {
+    // optional: fetch customer to save snapshot and ensure name is correct
+    const c = await Customer.findById(resolvedCustomerId);
+    if (c) {
+      resolvedCustomerName = c.name; // Override "Walk-in"
+      customerSnapshot = { name: c.name, phone: c.phone || "" };
+    }
   }
 
   // ✅ Create sale doc
   const sale = await Sale.create({
-    customerId: customerId || null,
+    customerId: resolvedCustomerId || null,
     customerSnapshot,
     invoiceNo,
-    customerName: customerName?.trim() || "Walk-in",
+    customerName: resolvedCustomerName,
     saleType: saleType || "retail",
     items: normalizedItems,
     subTotal,
@@ -99,6 +136,7 @@ export const createSale = async (req, res) => {
     paidAmount: paid,
     dueAmount,
     note: finalNote,
+    isNewCustomer, // Save the flag
   });
 
   // ✅ Stock ledger entries (minus stock)

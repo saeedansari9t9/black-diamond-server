@@ -189,3 +189,36 @@ export const deleteProduct = async (req, res) => {
     res.status(500).json({ ok: false, message: error.message });
   }
 };
+
+export const bulkUpdateProducts = async (req, res) => {
+  try {
+    const updates = req.body; // Expecting array of { id, retailPrice, wholesalePrice }
+
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return res.status(400).json({ ok: false, message: "No updates provided" });
+    }
+
+    const operations = updates.map((item) => ({
+      updateOne: {
+        filter: { _id: item.id },
+        update: {
+          $set: {
+            retailPrice: Number(item.retailPrice),
+            wholesalePrice: Number(item.wholesalePrice),
+          },
+        },
+      },
+    }));
+
+    const result = await Product.bulkWrite(operations);
+
+    res.json({
+      ok: true,
+      message: "Products updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Bulk update error:", error);
+    res.status(500).json({ ok: false, message: error.message });
+  }
+};

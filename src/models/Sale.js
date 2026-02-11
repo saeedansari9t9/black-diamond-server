@@ -25,6 +25,7 @@ const saleSchema = new mongoose.Schema(
       name: { type: String, default: "Walk-in" },
       phone: { type: String, default: "" },
     },
+    isNewCustomer: { type: Boolean, default: false },
     invoiceNo: { type: String, required: true, unique: true, index: true },
 
     customerName: { type: String, trim: true, default: "Walk-in" }, // abhi simple
